@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres-container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: test_db
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres-network
+    volumes:
+      - ./01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+
+  backend:
+    build:
+      context: ./test-backend
+      dockerfile: ../backend.Dockerfile
+    container_name: backend-container
+    depends_on:
+      - postgres
+    ports:
+      - "4000:4000"
+    networks:
+      - postgres-network
+
+  frontend:
+    build:
+      context: ./test-frontend
+      dockerfile: ../frontend.Dockerfile
+    container_name: frontend-container
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    networks:
+      - postgres-network
+
+networks:
+  postgres-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
